@@ -89,7 +89,7 @@ async function boot() {
     log(`Boot config: smp=${smp} ram=${ram} mttcg=${multi}`);
     await loadScript(ENGINE + "load.js");
     bootT0 = performance.now(); booted = true; startWatch();
-    const { default: init } = await import(ENGINE + "out.js");
+    const { default: init } = await import(new URL(ENGINE + "out.js", location.href).href);
     const inst = await init(window.Module);
     // Same poll patch as the upstream example so reads from the PTY do not block.
     const old = window.Module.TTY.stream_ops.poll, pty = window.Module.pty;
