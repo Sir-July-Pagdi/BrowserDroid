@@ -37,3 +37,7 @@ Do not mark Milestone 3 complete until the unimplemented rows are built and demo
 - `/` still loads; APK import, list, export, delete and storage views behave as before.
 - Service worker: after updating, hard-reload once so cache `browserdroid-shell-v3` replaces v2.
 - Icon: sidebar logo, favicon, apple-touch-icon and manifest icons all show the green Android-in-browser artwork.
+
+## Troubleshooting: diagnostics/lab links will not open on Cloudflare but work on GitHub Pages
+
+Cloudflare (Workers static assets and Pages) redirects `/x.html` to `/x`. Service worker v3 cached that redirect and served it to navigations, which browsers reject. Fixed in `sw.js` v4 (navigations go to the network; redirected responses are rebuilt before caching). After deploying: open `/diagnostics` directly, then in Safari/Chrome clear site data for the origin (or Settings → Safari → Advanced → Website Data → remove the site) so the old v3 worker is replaced. Optional: set `"html_handling": "none"` under `assets` in `wrangler.jsonc` to stop the redirect altogether.
