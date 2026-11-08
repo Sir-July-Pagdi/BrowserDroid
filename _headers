@@ -6,9 +6,9 @@
   Cross-Origin-Resource-Policy: same-origin
   X-Content-Type-Options: nosniff
 
-# Large engine artifacts: version them by filename and cache hard.
+# Engine artifacts keep fixed names across rebuilds, so always revalidate (cheap 304 when unchanged).
 /engine/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: no-cache
 
 # Service worker must always revalidate so updates (and header changes) are picked up.
 /sw.js
