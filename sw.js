@@ -1,4 +1,4 @@
-const CACHE = "browserdroid-shell-v4";
+const CACHE = "browserdroid-shell-v5";
 const ASSETS = ["./","./index.html","./manifest.webmanifest","./src/styles.css","./src/main.js","./src/db.js","./assets/icon-192.png","./assets/icon-512.png","./assets/apple-touch-icon.png","./assets/favicon-32.png","./diagnostics.html","./lab.html","./src/diagnostics.js","./src/diag-worker.js","./src/diagnostics.css","./src/lab.js"];
 
 // Hosts such as Cloudflare redirect /page.html -> /page. A response with redirected=true must never be served to a navigation
@@ -24,8 +24,9 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(req).catch(async () => (await caches.match(req, { ignoreSearch: true })) || (await caches.match(url.pathname.endsWith("/") ? "./index.html" : url.pathname.replace(/^\//, "./") + (url.pathname.endsWith(".html") ? "" : ".html"))) || (await caches.match("./index.html"))));
     return;
   }
-  event.respondWith(caches.match(req).then((hit) => hit || fetch(req).then(async (response) => {
-    if (response.ok && /\.(js|css|svg)$/.test(url.pathname)) { const copy = await clean(response.clone()); caches.open(CACHE).then((c) => c.put(req, copy)); }
+  // Network-first for shell assets so edits (e.g. a new lab.js) are never hidden behind a stale cache; cache is the offline fallback.
+  event.respondWith(fetch(req).then(async (response) => {
+    if (response.ok && /\.(js|css|svg|png|webmanifest|html)$/.test(url.pathname)) { const copy = await clean(response.clone()); caches.open(CACHE).then((c) => c.put(req, copy)); }
     return response;
-  })));
+  }).catch(() => caches.match(req)));
 });
