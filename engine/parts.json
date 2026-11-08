@@ -1,0 +1,18 @@
+{
+ "qemu-system-aarch64.data": {
+  "size": 26700273,
+  "parts": [
+   "qemu-system-aarch64.data.part000",
+   "qemu-system-aarch64.data.part001"
+  ]
+ },
+ "qemu-system-aarch64.wasm": {
+  "size": 66453095,
+  "parts": [
+   "qemu-system-aarch64.wasm.part000",
+   "qemu-system-aarch64.wasm.part001",
+   "qemu-system-aarch64.wasm.part002",
+   "qemu-system-aarch64.wasm.part003"
+  ]
+ }
+}
