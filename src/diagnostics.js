@@ -81,7 +81,7 @@ function sharedChecks() {
       try { const m = new WebAssembly.Memory({ initial: 1, maximum: max, shared: true }); if (!(m.buffer instanceof SharedArrayBuffer)) throw new Error("buffer is not a SharedArrayBuffer"); got = max; if (!mem) { mem = m; new Int32Array(m.buffer)[0] = 7; try { m.grow(1); mem = m; new Int32Array(m.buffer)[0] = 7; } catch (g) { err = " grow(1) failed: " + msg(g); } } break; }
       catch (e) { err = msg(e); }
     }
-    const mib = (p) => (p * 64 / 1024).toFixed(2) + " GiB";
+    const mib = (p) => (p * 64 / 1048576).toFixed(2) + " GiB";
     if (got === QEMU_PAGES) R("shared-mem", G, "Shared WebAssembly.Memory", "PASS", `Constructed with 1-page initial and ${mib(got)} maximum (the size the upstream aarch64 build wants), then grow(1)${err ? " —" + err : " OK"}. This proves address-space reservation only, NOT that 2.25 GiB can be committed on this device.`, true);
     else if (got > 0) R("shared-mem", G, "Shared WebAssembly.Memory", "BLOCKED", `Only a ${mib(got)} maximum could be reserved; the upstream build wants ${mib(QEMU_PAGES)}. A smaller-RAM guest build would be needed.${err ? " Last error: " + err : ""}`, true);
     else R("shared-mem", G, "Shared WebAssembly.Memory", hasSAB ? "BLOCKED" : (typeof SharedArrayBuffer === "undefined" ? "BLOCKED" : "NA"), (hasSAB ? "Construction failed: " : "Requires SharedArrayBuffer (see above). ") + err, true);
@@ -192,7 +192,7 @@ function render() {
   else { head.textContent = "Milestone 1 browser checks: all critical checks PASS on iPad Safari"; body.textContent = "This proves the browser exposes the required primitives. It does not prove QEMU-WASM will boot or perform acceptably (Milestones 2–3)."; }
   $("tally").textContent = `${tally.PASS} PASS · ${tally.BLOCKED} BLOCKED · ${tally.NA} NOT AVAILABLE   (★ = critical for threaded QEMU-WASM)`;
   const e = $("env"); e.replaceChildren();
-  const lines = [["Browser", `${env.isIPadSafari ? "iPadOS Safari " + env.safariVersion : "Not iPad Safari"}`], ["Mode", env.standalone ? "Installed PWA (standalone)" : "Browser tab"], ["Service worker", env.serviceWorkerControlled ? "controlling this page" : "not controlling"], ["Origin", env.origin], ["Screen", env.screen], ["User agent", env.userAgent]];
+  const lines = [["Browser", env.isIPadSafari ? "iPadOS Safari " + env.safariVersion : (/iPad|Macintosh/.test(env.userAgent) && /CriOS|FxiOS|EdgiOS/.test(env.userAgent) ? "Third-party iPad browser (uses WebKit on iOS, but not Safari)" : "Not iPad Safari")], ["Mode", env.standalone ? "Installed PWA (standalone)" : "Browser tab"], ["Service worker", env.serviceWorkerControlled ? "controlling this page" : "not controlling"], ["Origin", env.origin], ["Screen", env.screen], ["User agent", env.userAgent]];
   for (const [k, val] of lines) { const d = document.createElement("div"); const b = document.createElement("b"); b.textContent = k; const s = document.createElement("span"); s.textContent = val; d.append(b, s); e.append(d); }
 }
 
