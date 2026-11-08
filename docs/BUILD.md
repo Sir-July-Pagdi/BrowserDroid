@@ -54,3 +54,7 @@ QEMU (GPL-2.0+), the Linux kernel (GPL-2.0), BusyBox (GPL-2.0), glib (LGPL-2.1+)
 - **Pause/resume**: no control channel yet.
 - **Persistent disk**: root filesystem lives in Emscripten's in-memory FS; writes vanish on reload. OPFS-backed block layer is future work.
 - **MTTCG on 64-bit guests** is experimental upstream. The lab exposes it as a selectable option; expect problems.
+
+## Patches applied to upstream (found by real CI runs)
+
+1. **zlib URL** (first CI run, 2026-11-08): upstream's Dockerfile fetches `https://zlib.net/zlib-1.3.1.tar.xz`, which now returns an HTML page; the build failed at that step. `scripts/build-qemu-wasm.sh` patches a copy of the Dockerfile to use `https://zlib.net/fossils/zlib-1.3.1.tar.gz` (same version) and aborts if the patch does not apply. Further failures of this kind (moved download URLs) are expected in an old recipe; each one is logged here.
