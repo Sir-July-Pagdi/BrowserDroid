@@ -31,8 +31,48 @@
 
     <div class="notice"><strong>Experimental. Not Android.</strong><span>This page only runs a QEMU-WASM engine <em>if you built and deployed one</em> (docs/BUILD.md). No engine binaries ship in this repository. Nothing is uploaded anywhere.</span></div>
 
-    <div id="fatal" class="notice" hidden style="border-color:#ff7a7a"><strong>Script problem</strong><span id="fatal-msg"></span></div>
+    <div id="fatal" class="notice" style="display:none;border-color:#ff7a7a"><strong>Script problem</strong><span id="fatal-msg"></span></div>
 
     <section class="panel diag-group"><h2>Preflight</h2><div id="preflight"></div></section>
 
     <section class="panel diag-group"><h2>Guest</h2>
+      <p class="legend" style="margin:0 0 8px;color:var(--muted);font-size:13px">Upstream example: Raspberry Pi 3 (raspi3ap) machine, serial console only, BusyBox root filesystem in memory.</p>
+      <div class="lab-controls">
+        <label>CPUs <select id="opt-smp"><option>1</option><option>2</option><option selected>4</option></select></label>
+        <label>RAM <select id="opt-ram"><option>256M</option><option selected>512M</option></select></label>
+        <label>TCG <select id="opt-mttcg"><option value="single" selected>single-thread</option><option value="multi">multi-thread (MTTCG)</option></select></label>
+        <button class="btn primary" id="boot-btn" disabled>Boot guest</button>
+        <button class="btn secondary" id="poweroff-btn" disabled>Send “poweroff”</button>
+        <button class="btn secondary" id="stop-btn">Hard stop (reload)</button>
+      </div>
+      <div id="terminal" style="margin-top:12px" hidden></div>
+    </section>
+
+    <section class="panel diag-group"><h2>Measurements</h2>
+      <div class="metrics" id="metrics"></div>
+      <div class="lab-controls"><button class="btn secondary" id="bench-btn" disabled>Run guest CPU loop ×10 (thermal trend)</button><span id="bench-note" style="color:var(--muted);font-size:12px">Each run is a fixed shell loop inside the guest; wall time per run is shown below. Rising times over a long session suggest throttling. Safari exposes no thermal API.</span></div>
+      <table id="bench-table" hidden><thead><tr><th>Run</th><th>Wall time</th><th>Main-thread max lag</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <section class="panel diag-group"><h2>Milestone 3 status in this loader</h2>
+      <div class="diag-row"><span class="badge s-PASS">LOADER</span><div><strong>Serial console + boot timing</strong><small>Implemented. Verified only against the upstream recipe's expected file layout; not yet run against real artifacts.</small></div></div>
+      <div class="diag-row"><span class="badge s-NA">NOT IMPLEMENTED</span><div><strong>Framebuffer output, touch/keyboard to a guest display</strong><small>The upstream example is serial-only (-nographic). A display device plus a browser display backend still has to be built.</small></div></div>
+      <div class="diag-row"><span class="badge s-NA">NOT IMPLEMENTED</span><div><strong>Pause / resume</strong><small>No control channel to the engine yet (would need QEMU monitor access or an engine API).</small></div></div>
+      <div class="diag-row"><span class="badge s-NA">NOT IMPLEMENTED</span><div><strong>Persistent disk</strong><small>Upstream preloads the root filesystem into Emscripten’s in-memory FS; guest writes are lost on reload. OPFS-backed block storage is future work.</small></div></div>
+    </section>
+
+    <section class="panel diag-group"><h2>Engine log</h2><pre id="log"></pre></section>
+  </div>
+  <script>
+  // Safari on iPad has no easy console: surface script errors on the page itself.
+  (function () {
+    var show = function (m) { var f = document.getElementById("fatal"); document.getElementById("fatal-msg").textContent = m; f.style.display = "flex"; };
+    window.addEventListener("error", function (e) { show(e.message ? e.message + " (" + (e.filename || "").split("/").pop() + ":" + e.lineno + ")" : "Failed to load " + ((e.target && (e.target.src || e.target.href)) || "a resource")); }, true);
+    window.addEventListener("unhandledrejection", function (e) { show("Unhandled error: " + (e.reason && (e.reason.message || e.reason))); });
+    setTimeout(function () { if (!window.__labLoaded) show("src/lab.js did not run within 4 s. Open /src/lab.js in the browser and check it is the latest version (it should mention parts.json)."); }, 4000);
+  })();
+</script>
+  <script type="module" src="./src/lab.js"></script>
+</body>
+<!-- END OF lab.html: if you cannot find this line at the bottom of the deployed file, the upload was cut off -->
+</html>
