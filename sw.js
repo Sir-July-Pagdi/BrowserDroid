@@ -1,16 +1,31 @@
-const CACHE = "browserdroid-shell-v3";
+const CACHE = "browserdroid-shell-v4";
 const ASSETS = ["./","./index.html","./manifest.webmanifest","./src/styles.css","./src/main.js","./src/db.js","./assets/icon-192.png","./assets/icon-512.png","./assets/apple-touch-icon.png","./assets/favicon-32.png","./diagnostics.html","./lab.html","./src/diagnostics.js","./src/diag-worker.js","./src/diagnostics.css","./src/lab.js"];
-self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
-self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))));
-self.addEventListener("fetch", event => {
-  const url = new URL(event.request.url);
-  if (event.request.method !== "GET" || url.origin !== location.origin) return;
-  // Large engine artifacts are fetched straight from the network (HTTP cache handles them); keep them out of the shell cache.
-  if (url.pathname.includes("/engine/") || url.pathname.includes("/vendor/")) return;
-  event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request).then(response => {
-    if (response.ok && (url.pathname.endsWith(".js") || url.pathname.endsWith(".css") || url.pathname.endsWith(".svg"))) {
-      const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(event.request, copy));
-    }
+
+// Hosts such as Cloudflare redirect /page.html -> /page. A response with redirected=true must never be served to a navigation
+// (browsers reject it), so rebuild it as a plain response (headers, including COOP/COEP, are preserved).
+const clean = async (r) => (r.redirected ? new Response(await r.blob(), { status: r.status, statusText: r.statusText, headers: r.headers }) : r);
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then((cache) => Promise.allSettled(ASSETS.map(async (a) => {
+    const r = await fetch(a, { cache: "reload" });
+    if (r.ok) await cache.put(a, await clean(r));
+  }))));
+});
+self.addEventListener("activate", (event) => event.waitUntil(
+  caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request, url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== location.origin) return;
+  if (url.pathname.includes("/engine/") || url.pathname.includes("/vendor/")) return; // large engine artifacts: network/HTTP cache only
+  // Page navigations: always let the network (and its redirects/headers) win; fall back to cache only when offline.
+  if (req.mode === "navigate") {
+    event.respondWith(fetch(req).catch(async () => (await caches.match(req, { ignoreSearch: true })) || (await caches.match(url.pathname.endsWith("/") ? "./index.html" : url.pathname.replace(/^\//, "./") + (url.pathname.endsWith(".html") ? "" : ".html"))) || (await caches.match("./index.html"))));
+    return;
+  }
+  event.respondWith(caches.match(req).then((hit) => hit || fetch(req).then(async (response) => {
+    if (response.ok && /\.(js|css|svg)$/.test(url.pathname)) { const copy = await clean(response.clone()); caches.open(CACHE).then((c) => c.put(req, copy)); }
     return response;
   })));
 });
