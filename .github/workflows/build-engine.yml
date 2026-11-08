@@ -1,0 +1,61 @@
+name: build-engine
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Commit engine/ and vendor/ to main after a successful build"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          docker system prune -af || true
+          df -h /
+      - name: Build engine (logs kept)
+        run: |
+          mkdir -p build
+          set -o pipefail
+          bash scripts/build-all.sh 2>&1 | tee build/build.log
+      - name: Size report
+        if: always()
+        run: |
+          {
+            echo "## Engine build report"
+            echo '```'
+            ls -l engine vendor 2>&1 || true
+            echo '```'
+            echo "Files over 25 MiB:"
+            echo '```'
+            find engine vendor -type f -size +25M -exec ls -l {} \; 2>/dev/null || true
+            echo '```'
+            echo "Last 60 log lines:"
+            echo '```'
+            tail -n 60 build/build.log 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browserdroid-engine
+          path: |
+            engine/
+            vendor/
+            build/build.log
+            build/pack/
+          if-no-files-found: warn
+      - name: Commit artifacts to main
+        if: success() && inputs.publish
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add -f engine vendor
+          git commit -m "Add built QEMU-WASM engine artifacts" || echo "nothing to commit"
+          git push
