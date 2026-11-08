@@ -16,12 +16,15 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="./"><span class="brand-mark">B</span><span>BrowserDroid<small>LOCAL ANDROID LAB</small></span></a>
+      <a class="brand" href="./"><img class="brand-icon" src="./assets/icon-192.png" alt="" width="39" height="39"><span>BrowserDroid<small>LOCAL ANDROID LAB</small></span></a>
       <div class="nav-label">WORKSPACE</div>
       <button class="nav-item active" data-view="device"><span>▣</span> Virtual device</button>
       <button class="nav-item" data-view="apps"><span>▦</span> APK library <b id="app-count">0</b></button>
       <button class="nav-item" data-view="storage"><span>▤</span> Storage</button>
       <button class="nav-item" data-view="about"><span>ⓘ</span> Project status</button>
+      <div class="nav-label" style="padding-top:18px">ENGINE RESEARCH</div>
+      <a class="nav-item" href="./diagnostics.html"><span>✓</span> Browser diagnostics</a>
+      <a class="nav-item" href="./lab.html"><span>⌘</span> Linux boot lab</a>
       <div class="sidebar-bottom">
         <div class="local-chip"><i></i> Local-first mode</div>
         <p>Files stay in this browser unless you export them.</p>
@@ -37,7 +40,7 @@
       </header>
 
       <section class="view active" id="view-device">
-        <div class="notice"><strong>Prototype build</strong><span>The browser interface and local APK library work. Android execution is not connected yet; this build does not run APKs.</span></div>
+        <div class="notice"><strong>Prototype build</strong><span>The browser interface and local APK library work. Android execution is not connected yet; this build does not run APKs. Start with <a href="./diagnostics.html" style="color:var(--blue)">Browser diagnostics</a>, then the <a href="./lab.html" style="color:var(--blue)">Linux boot lab</a>.</span></div>
         <div class="device-layout">
           <section class="device-panel panel">
             <div class="panel-head"><div><span class="eyebrow">ANDROID GUEST</span><h2>Device display</h2></div><span class="tag muted">OFFLINE</span></div>
@@ -101,12 +104,15 @@
           <div class="status-line"><span>PWA install shell</span><b class="done">Implemented</b></div>
           <div class="status-line"><span>Local APK import and library</span><b class="done">Implemented</b></div>
           <div class="status-line"><span>IndexedDB metadata + OPFS file storage</span><b class="done">Implemented</b></div>
-          <div class="status-line"><span>QEMU compiled to WebAssembly</span><b class="planned">Not integrated</b></div>
+          <div class="status-line"><span>Browser feasibility diagnostics (Milestone 1)</span><b class="done">Implemented · run on iPad to verify</b></div>
+          <div class="status-line"><span>Cross-origin isolation headers (_headers, scripts/serve.py)</span><b class="done">Configured · verify on deployment</b></div>
+          <div class="status-line"><span>QEMU-WASM build recipe + Linux lab loader (Milestone 2)</span><b class="planned">Scripted, untested · no binaries bundled</b></div>
+          <div class="status-line"><span>QEMU compiled to WebAssembly</span><b class="planned">Not built or run yet</b></div>
           <div class="status-line"><span>ARM64 Android guest boot</span><b class="planned">Not implemented</b></div>
           <div class="status-line"><span>Android package installation</span><b class="planned">Not implemented</b></div>
           <div class="status-line"><span>General APK compatibility</span><b class="planned">Research target</b></div>
         </div>
-        <div class="panel roadmap-note"><h3>Next technical milestone</h3><p>Integrate and validate a browser-compatible QEMU ARM64 build, then boot a minimal guest in Safari. Only after that should an Android guest image and APK installation be attempted.</p><a href="https://github.com/ktock/qemu-wasm" target="_blank" rel="noreferrer">QEMU WASM research repository ↗</a></div>
+        <div class="panel roadmap-note"><h3>Next technical milestone</h3><p>1) Run the diagnostics on the iPad Air M3 under the isolated deployment. 2) Build the pinned ARM64 QEMU-WASM target (see docs/BUILD.md). 3) Boot a minimal ARM64 Linux guest in the Linux boot lab. Only after that should an Android guest image and APK installation be attempted.</p><a href="https://github.com/ktock/qemu-wasm" target="_blank" rel="noreferrer">QEMU WASM research repository ↗</a></div>
       </section>
 
       <footer>BrowserDroid · Local-first Android emulation research · <span id="year"></span></footer>

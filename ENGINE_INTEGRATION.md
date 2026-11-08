@@ -45,3 +45,10 @@ Worker events to UI:
 - 3D gaming or GPU passthrough.
 - Arbitrary device sensor emulation.
 - Multi-instance execution.
+
+
+## Update (M3 feasibility work)
+
+- Browser feasibility is now checked by `diagnostics.html` (Milestone 1). Run it on the target iPad before any engine work.
+- `lab.html` / `src/lab.js` load an engine from `./engine/` following the upstream raspi3ap example. It runs QEMU on the page's main thread plus Emscripten's own pthread workers (`-sPROXY_TO_PTHREAD`), **not** inside the dedicated `ENGINE_*` worker contract above. Moving to that contract is a later refactor, intentionally not done now ("avoid unnecessary rewrites").
+- The `ENGINE_*` message API in this document remains the target for Milestone 3+ but is not implemented.

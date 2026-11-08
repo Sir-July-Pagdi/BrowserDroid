@@ -1,0 +1,19 @@
+# Cloudflare Pages custom headers (https://developers.cloudflare.com/pages/configuration/headers/)
+# Required for cross-origin isolation => SharedArrayBuffer / WebAssembly threads in Safari.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+  X-Content-Type-Options: nosniff
+
+# Large engine artifacts: version them by filename and cache hard.
+/engine/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service worker must always revalidate so updates (and header changes) are picked up.
+/sw.js
+  Cache-Control: no-cache
+
+# WebAssembly must be served with the right type for streaming compilation.
+/engine/*.wasm
+  Content-Type: application/wasm

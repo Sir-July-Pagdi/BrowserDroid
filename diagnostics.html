@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="./src/styles.css">
+  <link rel="stylesheet" href="./src/diagnostics.css">
+  <title>BrowserDroid — Browser feasibility diagnostics</title>
+</head>
+<body>
+  <div class="diag-page">
+    <header class="diag-top">
+      <a class="brand" href="./"><img class="brand-icon" src="./assets/icon-192.png" alt="BrowserDroid" width="40" height="40"><span>BrowserDroid<small>FEASIBILITY DIAGNOSTICS · MILESTONE 1</small></span></a>
+      <nav><a href="./">← App</a><a href="./lab.html">Linux lab</a></nav>
+    </header>
+
+    <div class="notice"><strong>Run this in Safari on the iPad Air M3.</strong><span>Only results from the target device count as Milestone 1 evidence. This page does not boot anything and does not allocate gigabytes of memory.</span></div>
+
+    <section class="panel verdict v-warn" id="verdict"><div><h2 id="verdict-head">Running checks…</h2><p id="verdict-body">Please wait.</p><small id="tally"></small></div>
+      <div class="verdict-actions"><button class="btn primary" id="run-btn">Run again</button>
+        <span id="report-actions" hidden><button class="btn secondary" id="copy-btn">Copy JSON report</button> <button class="btn secondary" id="dl-btn">Download</button></span></div>
+      <textarea id="report-text" hidden readonly rows="8" aria-label="JSON report"></textarea>
+    </section>
+
+    <div id="groups"></div>
+
+    <section class="panel diag-group"><h2>Environment</h2><div id="env" class="env-grid"></div></section>
+
+    <section class="panel legend"><h2>How to read this</h2>
+      <p><span class="badge s-PASS">PASS</span> works in this browser right now.</p>
+      <p><span class="badge s-BLOCKED">BLOCKED</span> the feature exists or is expected, but is unusable here (missing COOP/COEP headers, policy, a failure, or a size limit).</p>
+      <p><span class="badge s-NA">NOT AVAILABLE</span> this browser does not implement the feature.</p>
+      <p>★ marks checks that a threaded QEMU-WASM build cannot run without. A PASS on a probe is necessary, not sufficient: it does not show that QEMU-WASM will boot or be fast enough.</p>
+    </section>
+  </div>
+  <script type="module" src="./src/diagnostics.js"></script>
+</body>
+</html>

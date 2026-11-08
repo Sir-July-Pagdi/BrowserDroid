@@ -2,7 +2,23 @@
 
 A deployable, local-first browser interface and feasibility scaffold for an Android emulator running entirely on iPadOS.
 
-> **Honest status:** This repository is a working PWA shell and local APK library. It does **not** currently boot Android or execute APKs. QEMU/WASM and a compatible Android ARM64 guest are not bundled or integrated.
+> **Honest status:** This repository is a working PWA shell, a local APK library, a browser-feasibility diagnostics page, and an *unverified* loader plus build scripts for a QEMU-WASM ARM64 Linux boot test. It does **not** boot Android or execute APKs, and **no engine binaries are included**. It is not yet an Android emulator. ARM64 Linux has **not** been demonstrated booting in Safari.
+
+## M3 feasibility prototype — start here
+
+| Piece | Where | State |
+|---|---|---|
+| Browser diagnostics (PASS / BLOCKED / NOT AVAILABLE) | `diagnostics.html`, `src/diagnostics.js`, `src/diag-worker.js` | Implemented; logic checked under Node shims only. **Not yet run in Safari on the iPad.** |
+| COOP/COEP hosting | `_headers` (Cloudflare Pages), `scripts/serve.py` (local) | Configured; verify on the real deployment |
+| Reproducible QEMU-WASM + guest build | `scripts/`, `docs/BUILD.md` | Written from the pinned upstream recipe; **never executed** |
+| Linux boot lab (serial console, boot timing, CPU-loop benchmark) | `lab.html`, `src/lab.js` | Written, **untested against real artifacts** |
+| Framebuffer, touch/keyboard to guest display, pause/resume, persistent disk | — | **Not implemented** |
+
+Testing: `docs/TESTING.md`. Build: `docs/BUILD.md`. Local run with isolation: `python3 scripts/serve.py` (the plain `http.server` command below does not send the required headers).
+
+## Hosting note
+
+GitHub stays the source repository, but **GitHub Pages cannot send COOP/COEP headers**, so threaded WebAssembly will be BLOCKED there. Deploy via Cloudflare Pages (the `_headers` file is already included).
 
 ## What works now
 
