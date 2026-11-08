@@ -88,3 +88,8 @@ The QEMU WASM fork is experimental. Validate its current build instructions, gue
 ## License
 
 The original BrowserDroid scaffold is released under the MIT License. Third-party emulator code, Android system images, and other assets retain their own licenses and redistribution requirements. See `THIRD_PARTY_NOTICES.md`.
+
+
+## App icon
+
+The supplied BrowserDroid artwork is included as the launcher and installable PWA icon. The manifest uses 192×192 and 512×512 PNG variants; iPadOS home-screen installation uses `assets/apple-touch-icon.png`. The 1024×1024 source artwork is retained at `assets/icon-source.png`.

@@ -1,5 +1,5 @@
-const CACHE = "browserdroid-shell-v1";
-const ASSETS = ["./","./index.html","./manifest.webmanifest","./src/styles.css","./src/main.js","./src/db.js","./assets/icon.svg"];
+const CACHE = "browserdroid-shell-v2";
+const ASSETS = ["./","./index.html","./manifest.webmanifest","./src/styles.css","./src/main.js","./src/db.js","./assets/icon-192.png","./assets/icon-512.png","./assets/apple-touch-icon.png","./assets/favicon-32.png"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))));
 self.addEventListener("fetch", event => {
