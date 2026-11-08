@@ -7,7 +7,7 @@
   ]
  },
  "qemu-system-aarch64.wasm": {
-  "size": 66453095,
+  "size": 66454636,
   "parts": [
    "qemu-system-aarch64.wasm.part000",
    "qemu-system-aarch64.wasm.part001",
