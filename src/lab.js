@@ -4,6 +4,7 @@
  *   out.js  qemu-system-aarch64.wasm  qemu-system-aarch64.worker.js  qemu-system-aarch64.data  load.js
  * and under ./vendor/ (scripts/vendor-xterm.sh): xterm.js  xterm.css  xterm-pty.js
  * STATUS: written against the upstream recipe; NOT yet exercised against real build artifacts. */
+window.__labLoaded = true;
 const $ = (id) => document.getElementById(id);
 const ENGINE = "./engine/", VENDOR = "./vendor/";
 const REQUIRED = [
@@ -35,14 +36,3 @@ async function preflight() {
     for (const [name, info] of Object.entries(man)) {
       let bad = 0; for (const p of info.parts) { const r = await fetch(ENGINE + p, { method: "HEAD", cache: "no-store" }); if (!r.ok) bad++; }
       if (bad) missing++;
-      row(host, name, bad ? "BLOCKED" : "PASS", bad ? `${bad} of ${info.parts.length} parts missing` : `${info.parts.length} parts, ${(info.size / 1048576).toFixed(1)} MiB total`);.append(td); }); body.append(tr);
-    if (!ok) break;
-  }
-  $("bench-btn").disabled = false;
-}
-
-$("boot-btn").addEventListener("click", boot);
-$("poweroff-btn").addEventListener("click", () => { type("poweroff\n"); log("Sent 'poweroff' to guest (BusyBox). Whether QEMU exits on this machine is unverified; use Hard stop if not."); });
-$("stop-btn").addEventListener("click", () => location.reload());
-$("bench-btn").addEventListener("click", bench);
-renderMetrics(); preflight();
