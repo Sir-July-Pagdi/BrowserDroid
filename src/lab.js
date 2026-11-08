@@ -89,13 +89,15 @@ async function boot() {
     log(`Boot config: smp=${smp} ram=${ram} mttcg=${multi}`);
     await loadScript(ENGINE + "load.js");
     bootT0 = performance.now(); booted = true; startWatch();
+    saveRun({ cfg: `smp=${smp} ram=${ram} mttcg=${multi}`, startedAt: Date.now() });
+    setInterval(() => saveRun({ elapsed: performance.now() - bootT0, kernel: metrics.kernel, prompt: metrics.prompt, last: lines().map((l) => l.trim()).filter(Boolean).slice(-10) }), 1000);
     const { default: init } = await import(new URL(ENGINE + "out.js", location.href).href);
     const inst = await init(window.Module);
     // Same poll patch as the upstream example so reads from the PTY do not block.
     const old = window.Module.TTY.stream_ops.poll, pty = window.Module.pty;
     window.Module.TTY.stream_ops.poll = function (stream, timeout) { if (!pty.readable) return (pty.readable ? 1 : 0) | (pty.writable ? 4 : 0); return old.call(stream, timeout); };
     $("poweroff-btn").disabled = false; $("bench-btn").disabled = false; $("boot-btn").textContent = "Running";
-    log("Engine initialised; guest is executing (check serial output above).");
+    log("Engine initialised; guest is executing. If the terminal says \"Please press Enter to activate this console\", tap the terminal and press Return."); try { term.focus(); } catch (_) {}
   } catch (e) { log("[FAILED] " + (e.stack || e.message || e)); $("boot-btn").textContent = "Boot failed — see log"; }
 }
 // Download split files and reassemble them as same-origin blob URLs (wasm gets the application/wasm type for streaming compile).
@@ -109,6 +111,19 @@ async function assembleParts() {
     log(`[load] ${name} assembled in ${fmtMs(performance.now() - t0)}`);
   }
   return urls;
+}
+// iPadOS can kill the page process (memory) and silently reload the tab. Keep a breadcrumb in sessionStorage so the next load can say so.
+const RUN_KEY = "bd-lab-run";
+function saveRun(extra) { try { sessionStorage.setItem(RUN_KEY, JSON.stringify(Object.assign({ phase: "running" }, JSON.parse(sessionStorage.getItem(RUN_KEY) || "{}"), extra))); } catch (_) {} }
+function clearRun() { try { sessionStorage.removeItem(RUN_KEY); } catch (_) {} }
+function reportPreviousRun() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(RUN_KEY) || "null"); if (!r || r.phase !== "running") return;
+    log(`[PREVIOUS RUN ENDED UNEXPECTEDLY] The page was reloaded while a guest was running (config: ${r.cfg}; ${((r.elapsed || 0) / 1000).toFixed(0)} s after boot click; kernel ${fmtMs(r.kernel)}; prompt ${fmtMs(r.prompt)}).`);
+    log("Last serial lines before the reload:\n  " + (r.last || []).join("\n  "));
+    log("Most likely Safari terminated the page process (memory or watchdog). Try fewer CPUs / less RAM and compare.");
+    clearRun();
+  } catch (_) {}
 }
 function type(text) { if (term) term.input(text, true); }
 
@@ -126,6 +141,7 @@ async function bench() {
 
 $("boot-btn").addEventListener("click", boot);
 $("poweroff-btn").addEventListener("click", () => { type("poweroff\n"); log("Sent 'poweroff' to guest (BusyBox). Whether QEMU exits on this machine is unverified; use Hard stop if not."); });
-$("stop-btn").addEventListener("click", () => location.reload());
+$("stop-btn").addEventListener("click", () => { clearRun(); location.reload(); });
 $("bench-btn").addEventListener("click", bench);
-renderMetrics(); preflight();
+try { $("opt-smp").value = "1"; $("opt-ram").value = "256M"; } catch (_) {}
+reportPreviousRun(); renderMetrics(); preflight();
