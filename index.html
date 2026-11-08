@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="A local-first Android emulation research project for the browser.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./src/styles.css">
+  <title>BrowserDroid — Local Android Lab</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="./"><span class="brand-mark">B</span><span>BrowserDroid<small>LOCAL ANDROID LAB</small></span></a>
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav-item active" data-view="device"><span>▣</span> Virtual device</button>
+      <button class="nav-item" data-view="apps"><span>▦</span> APK library <b id="app-count">0</b></button>
+      <button class="nav-item" data-view="storage"><span>▤</span> Storage</button>
+      <button class="nav-item" data-view="about"><span>ⓘ</span> Project status</button>
+      <div class="sidebar-bottom">
+        <div class="local-chip"><i></i> Local-first mode</div>
+        <p>Files stay in this browser unless you export them.</p>
+        <a href="https://github.com/your-account/browserdroid" target="_blank" rel="noreferrer">GitHub repository ↗</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" id="menu-btn" aria-label="Open navigation">☰</button>
+        <div><span class="eyebrow">EMULATION WORKSPACE</span><h1 id="page-title">Virtual device</h1></div>
+        <div class="top-actions"><span class="status-pill"><i></i> Engine not connected</span><button class="avatar">BD</button></div>
+      </header>
+
+      <section class="view active" id="view-device">
+        <div class="notice"><strong>Prototype build</strong><span>The browser interface and local APK library work. Android execution is not connected yet; this build does not run APKs.</span></div>
+        <div class="device-layout">
+          <section class="device-panel panel">
+            <div class="panel-head"><div><span class="eyebrow">ANDROID GUEST</span><h2>Device display</h2></div><span class="tag muted">OFFLINE</span></div>
+            <div class="device-stage">
+              <div class="phone-frame">
+                <div class="phone-camera"></div>
+                <div class="phone-screen">
+                  <div class="screen-status"><span>9:41</span><span>● ▮ ▰</span></div>
+                  <div class="android-mark">◇</div>
+                  <h3>Android guest<br>not booted</h3>
+                  <p>Connect a compatible QEMU/WASM build and Android guest image to enable the virtual device.</p>
+                  <div class="boot-state"><span></span> Waiting for emulator engine</div>
+                </div>
+              </div>
+            </div>
+            <div class="device-controls">
+              <button class="btn primary" id="boot-btn" disabled title="The QEMU/WASM engine is not included in this starter">Start virtual device</button>
+              <button class="btn secondary" id="restart-btn" disabled>Restart</button>
+              <span class="control-hint">Execution engine: not installed</span>
+            </div>
+          </section>
+          <aside class="right-column">
+            <section class="panel quick-panel">
+              <div class="panel-head"><div><span class="eyebrow">QUICK ACTIONS</span><h2>APK library</h2></div><span class="count" id="apk-total">0</span></div>
+              <p class="muted-copy">Import APK files into this browser's private storage. Importing does not install or execute them.</p>
+              <label class="dropzone" for="apk-input"><span class="upload-icon">↑</span><strong>Choose APK files</strong><small>Local import · .apk only</small></label>
+              <input id="apk-input" type="file" accept=".apk,application/vnd.android.package-archive" multiple hidden>
+              <div id="recent-apps" class="recent-list"><div class="empty-small">No APKs imported yet.</div></div>
+              <button class="text-btn" data-view="apps">Open APK library →</button>
+            </section>
+            <section class="panel specs-panel">
+              <div class="panel-head"><div><span class="eyebrow">VIRTUAL HARDWARE</span><h2>Configuration</h2></div></div>
+              <div class="spec-row"><span>Guest architecture</span><b>ARM64 target</b></div>
+              <div class="spec-row"><span>Guest operating system</span><b>Not configured</b></div>
+              <div class="spec-row"><span>CPU backend</span><b>QEMU / WASM · planned</b></div>
+              <div class="spec-row"><span>Disk persistence</span><b id="disk-status">Checking…</b></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-apps">
+        <div class="section-intro"><div><span class="eyebrow">LOCAL FILES</span><h2>Your APK library</h2><p>APK files are stored locally in this browser. No upload to a server is performed.</p></div><label class="btn primary" for="apk-input-2">＋ Import APKs</label><input id="apk-input-2" type="file" accept=".apk,application/vnd.android.package-archive" multiple hidden></div>
+        <div class="panel table-panel"><div class="table-head"><span>APPLICATION FILE</span><span>FILE SIZE</span><span>IMPORTED</span><span>ACTION</span></div><div id="apk-list" class="apk-list"><div class="empty-state">Your APK library is empty.</div></div></div>
+      </section>
+
+      <section class="view" id="view-storage">
+        <div class="section-intro"><div><span class="eyebrow">ON-DEVICE DATA</span><h2>Persistent storage</h2><p>Storage is scoped to this website and browser profile.</p></div></div>
+        <div class="storage-grid">
+          <div class="panel storage-card"><span class="eyebrow">ORIGIN STORAGE</span><h2 id="storage-used">Checking…</h2><p>Estimated usage</p><div class="meter"><span id="storage-meter"></span></div><small id="storage-quota">Checking browser quota…</small></div>
+          <div class="panel storage-card"><span class="eyebrow">PERSISTENCE</span><h2 id="persist-state">Checking…</h2><p>Browser storage retention</p><button class="btn secondary" id="persist-btn">Request persistent storage</button><small>Browser approval is not guaranteed. Export backups for important data.</small></div>
+          <div class="panel storage-card"><span class="eyebrow">APK FILES</span><h2 id="storage-files">0</h2><p>Files in local library</p><button class="btn secondary" id="export-index">Export library manifest</button><small>Manifest export contains metadata, not APK binary contents.</small></div>
+        </div>
+        <div class="panel storage-warning"><strong>Important</strong><p>Clearing Safari website data can remove this library. Browser storage quotas, eviction rules, private browsing, and operating-system cleanup can affect retention. This prototype does not yet store an Android virtual disk.</p></div>
+      </section>
+
+      <section class="view" id="view-about">
+        <div class="section-intro"><div><span class="eyebrow">ENGINEERING STATUS</span><h2>Project status</h2><p>Transparent capability tracking. Planned features are not represented as working features.</p></div></div>
+        <div class="panel status-table">
+          <div class="status-line"><span>Responsive browser interface</span><b class="done">Implemented</b></div>
+          <div class="status-line"><span>PWA install shell</span><b class="done">Implemented</b></div>
+          <div class="status-line"><span>Local APK import and library</span><b class="done">Implemented</b></div>
+          <div class="status-line"><span>IndexedDB metadata + OPFS file storage</span><b class="done">Implemented</b></div>
+          <div class="status-line"><span>QEMU compiled to WebAssembly</span><b class="planned">Not integrated</b></div>
+          <div class="status-line"><span>ARM64 Android guest boot</span><b class="planned">Not implemented</b></div>
+          <div class="status-line"><span>Android package installation</span><b class="planned">Not implemented</b></div>
+          <div class="status-line"><span>General APK compatibility</span><b class="planned">Research target</b></div>
+        </div>
+        <div class="panel roadmap-note"><h3>Next technical milestone</h3><p>Integrate and validate a browser-compatible QEMU ARM64 build, then boot a minimal guest in Safari. Only after that should an Android guest image and APK installation be attempted.</p><a href="https://github.com/ktock/qemu-wasm" target="_blank" rel="noreferrer">QEMU WASM research repository ↗</a></div>
+      </section>
+
+      <footer>BrowserDroid · Local-first Android emulation research · <span id="year"></span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
