@@ -27,8 +27,26 @@ export async function listApks() {
   });
 }
 
+async function writeViaWorker(name, file) {
+  await new Promise((resolve, reject) => {
+    const w = new Worker(new URL("./opfs-worker.js", import.meta.url));
+    w.onmessage = (e) => { w.terminate(); e.data.ok ? resolve() : reject(new Error("Storage write failed: " + e.data.error)); };
+    w.onerror = (e) => { w.terminate(); reject(new Error("Storage worker failed to start: " + (e.message || "unknown"))); };
+    w.postMessage({ dir: FILE_DIR, name, file });
+  });
+}
+
+async function writeToOpfs(dir, name, file) {
+  const handle = await dir.getFileHandle(name, { create: true });
+  if (typeof handle.createWritable === "function") {
+    try { const w = await handle.createWritable(); await w.write(file); await w.close(); return; }
+    catch (_) { /* fall through to the worker path (Safari) */ }
+  }
+  await writeViaWorker(name, file);
+}
+
 export async function saveApk(file) {
-  if (!file.name.toLowerCase().endsWith(".apk")) throw new Error("Only .apk files are accepted.");
+  if (!file.name.toLowerCase().endsWith(".apk")) throw new Error(`"${file.name}" is not an .apk file (iOS may rename or unzip files; pick the original .apk).`);
   if (!("storage" in navigator) || !navigator.storage.getDirectory) {
     throw new Error("This browser does not support the required Origin Private File System API.");
   }
@@ -37,10 +55,7 @@ export async function saveApk(file) {
   const id = crypto.randomUUID();
   const safeName = file.name.replace(/[^\w.\- ()]/g, "_");
   const storedName = `${id}-${safeName}`;
-  const handle = await dir.getFileHandle(storedName, { create: true });
-  const writable = await handle.createWritable();
-  await writable.write(file);
-  await writable.close();
+  await writeToOpfs(dir, storedName, file);
 
   const record = { id, name: file.name, storedName, size: file.size, type: file.type || "application/vnd.android.package-archive", importedAt: Date.now() };
   const db = await openDb();

@@ -21,6 +21,9 @@ document.querySelectorAll("[data-view]").forEach(el => el.addEventListener("clic
 $("menu-btn").addEventListener("click", () => $("sidebar").classList.toggle("open"));
 $("year").textContent = new Date().getFullYear();
 
+// iOS/iPadOS greys out files whose type it does not know (.apk) when an accept filter is set, so drop the filter; saveApk validates the name.
+document.querySelectorAll('input[type="file"]').forEach(i => i.removeAttribute("accept"));
+
 async function importFiles(files) {
   for (const file of files) {
     try { await saveApk(file); toast(`Imported ${file.name}`); }
