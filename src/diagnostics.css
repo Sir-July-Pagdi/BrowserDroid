@@ -1,0 +1,19 @@
+.diag-page{max-width:920px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.diag-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.diag-top .brand{margin:0}.diag-top nav{display:flex;gap:14px}.diag-top nav a{color:var(--blue);text-decoration:none;font-size:14px}
+.brand-icon{border-radius:10px;display:block}
+.diag-page .notice{margin-bottom:14px}
+.verdict{padding:18px;margin-bottom:14px;border-left:4px solid var(--amber)}
+.verdict.v-ok{border-left-color:var(--green)}.verdict.v-bad{border-left-color:#ff7a7a}.verdict.v-warn{border-left-color:var(--amber)}
+.verdict h2{margin:0 0 6px;font-size:17px}.verdict p{margin:0 0 8px;color:var(--muted);font-size:14px;line-height:1.45}.verdict small{color:var(--muted)}
+.verdict-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.verdict textarea{width:100%;margin-top:10px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;font:12px ui-monospace,monospace}
+.diag-group{padding:16px 18px;margin-bottom:14px}.diag-group h2{margin:0 0 10px;font-size:13px;letter-spacing:1.4px;color:#8495b1;text-transform:uppercase}
+.diag-row{display:grid;grid-template-columns:118px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--line);align-items:start}
+.diag-row:first-of-type{border-top:0}
+.diag-row strong{display:block;font-size:14px;margin-bottom:3px}.diag-row small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45;overflow-wrap:anywhere}
+.badge{display:inline-block;text-align:center;padding:5px 8px;border-radius:7px;font-size:10.5px;font-weight:800;letter-spacing:.6px;white-space:nowrap}
+.s-PASS{background:#143a2c;color:var(--green)}.s-BLOCKED{background:#40222a;color:#ff9a9a}.s-NA{background:#2a2f3d;color:#aab4c8}
+.env-grid div{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:6px 0;font-size:12.5px}.env-grid b{color:#8495b1}.env-grid span{overflow-wrap:anywhere}
+.legend p{margin:8px 0;font-size:13px;color:var(--muted);line-height:1.5}
+@media(max-width:560px){.diag-row{grid-template-columns:1fr;gap:6px}.diag-row .badge{justify-self:start}}
