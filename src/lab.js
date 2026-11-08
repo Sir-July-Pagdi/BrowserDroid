@@ -8,9 +8,8 @@ const $ = (id) => document.getElementById(id);
 const ENGINE = "./engine/", VENDOR = "./vendor/";
 const REQUIRED = [
   [ENGINE + "out.js", "QEMU JS glue (renamed qemu-system-aarch64)"],
-  [ENGINE + "qemu-system-aarch64.wasm", "QEMU WebAssembly binary"],
   [ENGINE + "qemu-system-aarch64.worker.js", "pthread worker script"],
-  [ENGINE + "qemu-system-aarch64.data", "Preloaded kernel/DTB/rootfs package"],
+  [ENGINE + "parts.json", "Manifest of split files (wasm + data), each part under the host's per-file limit"],
   [ENGINE + "load.js", "Data-package loader"],
   [VENDOR + "xterm.js", "xterm.js terminal"],
   [VENDOR + "xterm-pty.js", "xterm-pty (PTY bridge)"],
@@ -31,6 +30,14 @@ async function preflight() {
     try { const r = await fetch(url, { method: "HEAD", cache: "no-store" }); const ok = r.ok && !(r.headers.get("content-type") || "").includes("text/html"); if (!ok) missing++; row(host, url.slice(2), ok ? "PASS" : "BLOCKED", ok ? `${what} — ${r.headers.get("content-length") ? (r.headers.get("content-length") / 1048576).toFixed(1) + " MiB" : "size unknown"}` : `${what} — not found (HTTP ${r.status}). Build it with docs/BUILD.md.`); }
     catch (e) { missing++; row(host, url.slice(2), "BLOCKED", `${what} — fetch failed: ${e.message}`); }
   }
+  try {
+    const man = await (await fetch(ENGINE + "parts.json", { cache: "no-store" })).json();
+    for (const [name, info] of Object.entries(man)) {
+      let bad = 0; for (const p of info.parts) { const r = await fetch(ENGINE + p, { method: "HEAD", cache: "no-store" }); if (!r.ok) bad++; }
+      if (bad) missing++;
+      row(host, name, bad ? "BLOCKED" : "PASS", bad ? `${bad} of ${info.parts.length} parts missing` : `${info.parts.length} parts, ${(info.size / 1048576).toFixed(1)} MiB total`);
+    }
+  } catch (e) { missing++; row(host, "engine/parts.json", "BLOCKED", "Cannot read parts manifest: " + e.message); }
   preflightOk = iso && missing === 0;
   $("boot-btn").disabled = !preflightOk;
   if (!preflightOk) row(host, "Result", "BLOCKED", "Cannot boot: " + (!iso ? "page is not cross-origin isolated. " : "") + (missing ? `${missing} required file(s) missing. This repository does not bundle engine binaries.` : ""));
@@ -66,8 +73,9 @@ async function boot() {
     term = new Terminal(); term.open($("terminal"));
     const { master: m, slave } = openpty(); master = m; term.loadAddon(master);
     const smp = $("opt-smp").value, ram = $("opt-ram").value, multi = $("opt-mttcg").value === "multi";
+    const blobs = await assembleParts();
     window.Module = {
-      locateFile: (p) => ENGINE + p,
+      locateFile: (p) => blobs[p] || ENGINE + p,
       mainScriptUrlOrBlob: new URL(ENGINE + "out.js", location.href).href,
       pty: slave,
       print: (t) => log("[out] " + t), printErr: (t) => log("[err] " + t),
@@ -88,6 +96,18 @@ async function boot() {
     $("poweroff-btn").disabled = false; $("bench-btn").disabled = false; $("boot-btn").textContent = "Running";
     log("Engine initialised; guest is executing (check serial output above).");
   } catch (e) { log("[FAILED] " + (e.stack || e.message || e)); $("boot-btn").textContent = "Boot failed — see log"; }
+}
+// Download split files and reassemble them as same-origin blob URLs (wasm gets the application/wasm type for streaming compile).
+async function assembleParts() {
+  const man = await (await fetch(ENGINE + "parts.json", { cache: "no-store" })).json(), urls = {};
+  for (const [name, info] of Object.entries(man)) {
+    const bufs = []; let got = 0, t0 = performance.now();
+    for (const p of info.parts) { const r = await fetch(ENGINE + p); if (!r.ok) throw new Error(`HTTP ${r.status} for ${p}`); const b = await r.arrayBuffer(); bufs.push(b); got += b.byteLength; log(`[load] ${p} (${(got / 1048576).toFixed(1)}/${(info.size / 1048576).toFixed(1)} MiB)`); }
+    if (got !== info.size) throw new Error(`${name}: assembled ${got} bytes, expected ${info.size}`);
+    urls[name] = URL.createObjectURL(new Blob(bufs, { type: name.endsWith(".wasm") ? "application/wasm" : "application/octet-stream" }));
+    log(`[load] ${name} assembled in ${fmtMs(performance.now() - t0)}`);
+  }
+  return urls;
 }
 function type(text) { if (term) term.input(text, true); }
 
