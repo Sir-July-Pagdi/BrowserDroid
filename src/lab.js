@@ -73,23 +73,24 @@ async function boot() {
     await loadScript(VENDOR + "xterm.js"); await loadScript(VENDOR + "xterm-pty.js");
     term = new Terminal(); term.open($("terminal"));
     const { master: m, slave } = openpty(); master = m; term.loadAddon(master);
-    const smp = $("opt-smp").value, ram = $("opt-ram").value, multi = $("opt-mttcg").value === "multi";
+    const smp = "4", ram = "512M", tb = $("opt-tb").value, multi = $("opt-mttcg").value === "multi"; // raspi3ap: QEMU enforces exactly 4 CPUs and 512 MiB
     const blobs = await assembleParts();
     window.Module = {
       locateFile: (p) => blobs[p] || ENGINE + p,
       mainScriptUrlOrBlob: new URL(ENGINE + "out.js", location.href).href,
       pty: slave,
       print: (t) => log("[out] " + t), printErr: (t) => log("[err] " + t),
-      onAbort: (w) => { log("[ABORT] " + w); },
+      onAbort: (w) => { log("[ABORT] " + w); saveRun({ phase: "exited" }); },
+      onExit: (c) => { log("[EXIT] engine exited with code " + c); saveRun({ phase: "exited" }); },
       arguments: ["-nic", "none", "-M", "raspi3ap", "-nographic", "-m", ram,
-        "-accel", multi ? "tcg,tb-size=500,thread=multi" : "tcg,tb-size=500", "-smp", multi ? `${smp},sockets=${smp}` : smp,
+        "-accel", multi ? `tcg,tb-size=${tb},thread=multi` : `tcg,tb-size=${tb}`, "-smp", multi ? `${smp},sockets=${smp}` : smp,
         "-dtb", "/pack/bcm2710-rpi-3-b-plus.dtb", "-kernel", "/pack/kernel8.img", "-drive", "file=/pack/rootfs.bin,format=raw,if=sd",
         "-append", "earlycon=pl011,0x3f201000 console=ttyAMA0,115200 loglevel=8 initcall_blacklist=bcm2835_pm_driver_init root=/dev/mmcblk0 rootfstype=ext4 rootwait no_console_suspend"],
     };
     log(`Boot config: smp=${smp} ram=${ram} mttcg=${multi}`);
     await loadScript(ENGINE + "load.js");
     bootT0 = performance.now(); booted = true; startWatch();
-    saveRun({ cfg: `smp=${smp} ram=${ram} mttcg=${multi}`, startedAt: Date.now() });
+    saveRun({ cfg: `smp=${smp} ram=${ram} tb=${tb}M mttcg=${multi}`, startedAt: Date.now() });
     setInterval(() => saveRun({ elapsed: performance.now() - bootT0, kernel: metrics.kernel, prompt: metrics.prompt, last: lines().map((l) => l.trim()).filter(Boolean).slice(-10) }), 1000);
     const { default: init } = await import(new URL(ENGINE + "out.js", location.href).href);
     const inst = await init(window.Module);
@@ -143,5 +144,13 @@ $("boot-btn").addEventListener("click", boot);
 $("poweroff-btn").addEventListener("click", () => { type("poweroff\n"); log("Sent 'poweroff' to guest (BusyBox). Whether QEMU exits on this machine is unverified; use Hard stop if not."); });
 $("stop-btn").addEventListener("click", () => { clearRun(); location.reload(); });
 $("bench-btn").addEventListener("click", bench);
-try { $("opt-smp").value = "1"; $("opt-ram").value = "256M"; } catch (_) {}
+// Found by testing: machine raspi3ap only accepts exactly 4 CPUs and 512 MiB, so those are locked. The knob that can matter for memory is the TCG translation-buffer size.
+try {
+  for (const [id, v] of [["opt-smp", "4"], ["opt-ram", "512M"]]) { const el = $(id); el.value = v; el.disabled = true; el.title = "Fixed by QEMU for the raspi3ap machine"; }
+  const lab = document.createElement("label"); lab.append("TB cache ");
+  const sel = document.createElement("select"); sel.id = "opt-tb";
+  for (const v of [32, 64, 128, 256, 500]) { const o = document.createElement("option"); o.value = String(v); o.textContent = v + " MB"; if (v === 128) o.selected = true; sel.append(o); }
+  lab.append(sel); $("opt-mttcg").parentElement.after(lab);
+} catch (_) {}
+window.addEventListener("pagehide", () => clearRun()); // a user-initiated reload/navigation fires pagehide; a killed page process does not
 reportPreviousRun(); renderMetrics(); preflight();
